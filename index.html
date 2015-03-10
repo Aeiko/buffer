@@ -1,0 +1,149 @@
+<!doctype html>
+<html ng-app="myApp">
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+    <script src="https://cdn.firebase.com/js/client/2.2.1/firebase.js"></script>
+    <script src="https://cdn.firebase.com/libs/angularfire/1.0.0/angularfire.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.1/js/vendor/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.1/js/foundation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.1/js/vendor/modernizr.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.1/js/vendor/placeholder.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.1/css/foundation.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.1/css/normalize.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.min.css" />
+</head>
+<style>
+    .custom-button {
+        border: 2px solid #1AA0DE;
+        padding: 7px 34px 7px 28px;
+        width: 100%;
+        margin-right: 5px;
+        margin-bottom: 10px;
+        border-radius: 7px !important;
+    }
+</style>
+
+<body ng-controller="MyController">
+    <div class="container">
+        <div class="row">
+            <div class="small-12 columns text-center">
+                <br>
+                <h1 style="font-size: 72px; margin-bottom: 20px"><i class="fi-asl"></i></h1>
+                <h2 style="margin-bottom: 0px"><b>Buffer</b></h2>
+                <p style="margin-bottom: 8px; opacity: 0.6">the mobile credit app</p>
+                <div class="row">
+                    <div class="small-12 columns">
+                        <input style="border: 2px solid #c9c9c9; vertical-align: middle; border-radius: 7px;" type="text" name="email" placeholder="email" ng-model="user.email">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="small-12 columns">
+                        <input ng-keydown="login($event)" style="border: 2px solid #c9c9c9; vertical-align: middle; border-radius: 7px;" type="password" name="password" placeholder="password" ng-model="user.password">
+                    </div>
+                </div>
+                <span id="loginButton" class="custom-button button" style="background: #1AA0DE; color: #fff; margin-top: 5px;" ng-click="loginButton()">
+                    <i class="fi-power"></i>
+                    <b ng-model="loginLabel">Login</b>
+                </span>
+                <br>
+                <span id="err" style="color: red; font-size: 14px;"></span>
+                <a href="#" style="font-size: 14px; padding-bottom: 5px; margin-bottom: 10px; border-bottom: 1px solid">Create an account</a>
+                <span style="font-size: 14px; opacity: 0.5">or use test@gmail.com | test</span>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- CHAT MARKUP -->
+    <!--
+    <div class="example-chat l-demo-container">
+        <header>Firebase Chat Demo</header>
+
+        <div class="example-chat-toolbar">
+            <label for="nameInput">Username:</label>
+            <input ng-model="user.name" type="text" id="nameInput" placeholder="enter a username...">
+        </div>
+
+        <ul id="example-messages" class="example-chat-messages">
+            <li ng-repeat="msg in messages">
+                <strong class="example-chat-username">{{ msg.from }}</strong> {{ msg.body }}
+            </li>
+        </ul>
+
+        <footer>
+            <input ng-model="msg" ng-keydown="addMessage($event)" type="text" id="messageInput" placeholder="Type a message...">
+        </footer>
+    </div>
+    -->
+    <script>
+        var myApp = angular.module("myApp", ["firebase"]);
+        //CREATE A FIREBASE REFERENCE
+        var ref = new Firebase("https://buffer.firebaseio.com");
+
+        myApp.controller("MyController", ["$scope", "$firebaseArray",
+        function ($scope, $firebaseArray) {
+                
+                $scope.loginButton = function (e) {
+                    var name = $scope.user.email || "anonymous";
+                    TweenLite.to("#loginButton", 0.5, {opacity:"0.25", cursor: "default", background: "#ccc", color: "#000", border: "2px solid #ccc" });
+                    ref.authWithPassword({
+                        email: name,
+                        password: $scope.user.password
+                    }, function (error, authData) {
+                        if (error) {
+                            console.log("Login Failed!", error);
+                            var repeatCount = 5;
+                            var max = 5;
+                            var min = -5;
+                            var item = $('#loginButton');
+                            TweenMax.to(item,0.1,{repeat:repeatCount-1, x:Math.floor(Math.random() * (max - min + 1) + min), delay:.1});
+                            TweenMax.to(item,0.1,{y:0, x:0, delay:(repeatCount+1) * .1});
+
+                            TweenLite.to("#loginButton", 0.5, {opacity:"1", cursor: "pointer", background: "#1AA0DE", color: "#fff", border: "2px solid #1AA0DE" });
+                            document.getElementById("err").innerHTML = "Invalid login credentials<br>";
+                        } else {
+                            console.log("Authenticated successfully with payload:", authData);
+                            window.location.replace("home.html");
+                        }
+                    });
+                }
+                
+                $scope.login = function (e) {
+                    if (e.keyCode === 13){
+                        var name = $scope.user.email || "anonymous";
+                        TweenLite.to("#loginButton", 0.5, {opacity:"0.25", cursor: "default", background: "#ccc", color: "#000", border: "2px solid #ccc" });
+                        ref.authWithPassword({
+                            email: name,
+                            password: $scope.user.password
+                        }, function (error, authData) {
+                            if (error) {
+                                console.log("Login Failed!", error);
+                                var repeatCount = 5;
+                                var max = 5;
+	                            var min = -5;
+                                var item = $('#loginButton');
+                                TweenMax.to(item,0.1,{repeat:repeatCount-1, x:Math.floor(Math.random() * (max - min + 1) + min), delay:.1});
+                                TweenMax.to(item,0.1,{y:0, x:0, delay:(repeatCount+1) * .1});
+                                
+                                TweenLite.to("#loginButton", 0.5, {opacity:"1", cursor: "pointer", background: "#1AA0DE", color: "#fff", border: "2px solid #1AA0DE" });
+                                document.getElementById("err").innerHTML = "Invalid login credentials<br>";
+                            } else {
+                                console.log("Authenticated successfully with payload:", authData);
+                                window.location.replace("home.html");
+                            }
+                        });
+                    }
+                }
+            }
+        ]);
+
+        $(document).foundation();
+    </script>
+</body>
+
+</html>
